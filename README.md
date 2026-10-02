@@ -1,5 +1,7 @@
 # 소액결제 차액결제 시뮬레이터
 
+[![CI](https://github.com/2Dokk/net-settlement-simulator/actions/workflows/ci.yml/badge.svg)](https://github.com/2Dokk/net-settlement-simulator/actions/workflows/ci.yml)
+
 **이체는 즉시, 결제는 다음 날. 그 사이 한 은행이 무너져도 전체 돈의 합이 맞는지 테스트로 증명한 시뮬레이터.**
 
 은행 공동망의 이연 차액결제(Deferred Net Settlement) 구조를 단순화해서 Spring Boot + PostgreSQL로 구현한
