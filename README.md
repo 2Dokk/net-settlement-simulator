@@ -114,9 +114,13 @@
 | `DefaultScenarioTest` | 담보로 해결되는 부족 / 공동분담까지 가는 부족(분담액 1:2 비율, 1원 단위까지) / 분담 불가 시 전체 롤백 — 모두 전체 돈의 합 보존 |
 | `DoubleSettlementTest` | 같은 날 결제를 동시에 5번 → 1번만 반영 |
 | `LossAllocatorTest` | 무작위 1,000회: 분담액 합 = 부족액, 각 분담액이 정확한 비율에서 1원 이내 |
+| `SchedulerTest` | 크론을 매초로 켠 컨텍스트에서, 직접 호출 없이 스케줄러만으로 마감 → 차액결제가 일어남 |
+| `ScheduleConfigTest` | 기본 크론이 평일 16:30 마감, 다음 영업일 11:00 결제로 도는지(금요일 마감 → 월요일 결제) |
+| `ApiFlowTest` | HTTP로 은행 등록 → 이체(승인·재전송·번호 재사용 409·한도 초과) → 마감 → 상계 → 결제 → 재결제 |
 
-테스트가 실제로 버그를 잡는지도 확인했습니다. 은행 포지션 잠금 순서를 "보내는 은행 먼저"로 일부러 바꾸면
-`CrossTransferDeadlockTest`가 PostgreSQL `deadlock detected`로 실패합니다.
+테스트가 실제로 버그를 잡는지도 확인했습니다.
+- 은행 포지션 잠금 순서를 "보내는 은행 먼저"로 일부러 바꾸면 `CrossTransferDeadlockTest`가 PostgreSQL `deadlock detected`로 실패합니다.
+- 결제 크론을 끄면 `SchedulerTest`가 실패합니다.
 
 **전체 돈의 합** = 고객 잔액 + 은행 결제계좌 + 담보. 공동분담액은 나머지 은행의 결제계좌·담보에서 받을 은행의
 결제계좌로 옮겨지는 돈이라 이 합 안에 이미 들어 있습니다. 모든 시나리오에서 시작과 끝이 같은지 확인합니다.
@@ -149,6 +153,9 @@ docker compose up -d     # PostgreSQL 16 (호스트 포트 5433)
 | GET | `/settlements/{date}/netting` | 다자간 상계 결과 미리보기 |
 | POST | `/settlements/{date}` | 차액결제 실행 |
 | GET | `/settlements/{date}` | 차액결제 결과 |
+
+거절된 이체도 정상 처리 결과라 200으로 돌려주고 `status`로 구분합니다. Windows 명령줄에서 curl로 한글 본문을
+보내면 CP949로 바뀌어 들어가므로, 본문은 UTF-8 파일로 보내세요(`curl --data-binary @body.json ...`).
 
 ## 기술 스택
 

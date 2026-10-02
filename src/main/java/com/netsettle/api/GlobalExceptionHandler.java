@@ -4,6 +4,7 @@ import com.netsettle.service.DuplicateMessageNoException;
 import com.netsettle.service.SettlementFailedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -29,6 +30,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     public ResponseEntity<Map<String, Object>> handleBadRequest(RuntimeException ex) {
         return body(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    /** 깨진 JSON, UTF-8이 아닌 본문, 숫자 자리에 문자 등. 기본 처리기는 메시지 없이 400만 돌려줘서 원인을 알 수 없습니다. */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleUnreadable(HttpMessageNotReadableException ex) {
+        return body(HttpStatus.BAD_REQUEST, "요청 본문을 읽을 수 없습니다(JSON 형식과 UTF-8 인코딩을 확인하세요)");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
