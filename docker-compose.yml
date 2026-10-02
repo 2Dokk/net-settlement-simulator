@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: netsettle-postgres
+    environment:
+      POSTGRES_DB: netsettle
+      POSTGRES_USER: netsettle
+      POSTGRES_PASSWORD: netsettle
+    ports:
+      - "5433:5432"
+    volumes:
+      - netsettle-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U netsettle -d netsettle"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  netsettle-postgres-data:

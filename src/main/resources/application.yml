@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: net-settlement-simulator
+  datasource:
+    url: jdbc:postgresql://localhost:5433/netsettle
+    username: netsettle
+    password: netsettle
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    locations: classpath:db/migration
+
+server:
+  port: 8080
+
+netsettle:
+  # 영업일 마감 시각. "-"이면 자동 마감을 끄고 API(POST /business-days/{date}/close)로만 마감합니다.
+  cutoff-cron: "0 30 16 * * MON-FRI"
+  # 전 영업일 차액결제 시각. "-"이면 끕니다.
+  settlement-cron: "0 0 11 * * MON-FRI"
+
+logging:
+  level:
+    com.netsettle: DEBUG
