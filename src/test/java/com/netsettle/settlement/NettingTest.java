@@ -41,7 +41,7 @@ class NettingTest extends AbstractIntegrationTest {
         List<CustomerAccount> accounts = new ArrayList<>();
         for (int i = 0; i < BANKS; i++) {
             // 한도·결제계좌를 넉넉히 줘서 이 테스트에서는 거절이나 부족이 생기지 않게 합니다(상계 자체만 봄).
-            Bank bank = bank("B" + i, 100_000_000, 100_000_000, 10_000_000);
+            Bank bank = bank(String.valueOf((char) ('A' + i)), 100_000_000, 100_000_000, 10_000_000);
             banks.add(bank);
             for (int j = 0; j < ACCOUNTS_PER_BANK; j++) {
                 accounts.add(account(bank, 50_000_000));
@@ -92,6 +92,20 @@ class NettingTest extends AbstractIntegrationTest {
                 result.stats().interbankTransfers(), result.stats().grossAmount(),
                 result.stats().settlementCount(), result.stats().netAmount(),
                 100.0 * (result.stats().grossAmount() - result.stats().netAmount()) / result.stats().grossAmount());
+        for (Bank bank : banks) {
+            System.out.printf("[은행별 차액] %s: %,d원%n", bank.getCode(), preview.netAmounts().getOrDefault(bank.getId(), 0L));
+        }
+        jdbc.query("""
+                select fa.bank_id as from_bank, ta.bank_id as to_bank, count(*) as cnt, sum(t.amount) as amount
+                from transfers t
+                join customer_accounts fa on fa.id = t.from_account_id
+                join customer_accounts ta on ta.id = t.to_account_id
+                where t.business_date = ? and t.status = 'APPROVED'
+                group by fa.bank_id, ta.bank_id order by 1, 2
+                """, rs -> {
+            System.out.printf("[은행 간 이체] %c→%c: %d건, %,d원%n", (char) ('A' + rs.getLong("from_bank") - 1), (char) ('A' + rs.getLong("to_bank") - 1),
+                    rs.getLong("cnt"), rs.getLong("amount"));
+        }, DAY);
     }
 
     private Map<Long, Long> netFromTransferTable() {
